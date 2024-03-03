@@ -1,5 +1,5 @@
 %!TeX log
-\documentclass[10pt]{report}
+\documentclass[11pt]{report}
 
 \usepackage{float}
 \usepackage{booktabs}
@@ -14,6 +14,9 @@
 \usepackage{array,ragged2e}
 \usepackage{makecell}
 \usepackage{tocloft}
+\usepackage[scaled=0.85]{beramono}
+
+\usetikzlibrary{fit, positioning, shapes.arrows}
 
 \geometry{
     a4paper,
@@ -23,7 +26,7 @@
     foot=0ex,
 }
 
-\title{Extensible Homebrew Computer System Architecture Specification}
+\title{Extensible Homebrew Computer \\ System Architecture Specification}
 \author{Minsu Kwon (kms1212)}
 \date{\today}
 
@@ -35,8 +38,8 @@
     \vspace*{\fill}
     \hspace*{\fill}
     \begin{tabular}[c]{@{}p{0.8\textwidth}@{}}
-        \raggedleft\LARGE\@title\\[1em]
-        \raggedleft\Large\@author\\[2em]
+        \raggedleft\Huge\textbf{\@title}\\[1em]
+        \raggedleft\LARGE\@author\\[2em]
     \end{tabular}
     \vspace*{\fill}
     \clearpage
@@ -44,13 +47,14 @@
 \makeatother
 
 \newpage
+\vspace*{\fill}
 \section*{License Information}
 
 \begin{flushleft}
 All files in this repository excluding documents which specifies any other
-license in its header or “LICENSE” file of its parent directory follow
-BSD-2-Clause, except for the  that the font data of documentations using
-template which is used in this documentation:  The contents of this repository
+license in its header or “LICENSE” file of its parent directory follow BSD
+license, except for the  that the font data of documentations using template
+which is used in this documentation:  The contents of this repository
 do not warrant its proper operation, and does not warrant its correct
 documentation. Reading this document, it is recommended to check its desired
 operation from code or binary files on your own.
@@ -66,7 +70,8 @@ operation from code or binary files on your own.
     \item AVR is a registered trademark of Atmel Corp.\ acquired by Microchip Technology Inc.
 \end{itemize}
 
-\begin{tcolorbox}[enhanced jigsaw, colback=white, colframe=black, boxrule=0.75pt, arc=0pt, outer arc=0pt, drop shadow=black]
+\begin{center}
+\begin{tcolorbox}[enhanced jigsaw, colback=white, colframe=black, boxrule=0.75pt, width=0.8\textwidth, arc=0pt, outer arc=0pt, drop shadow=black]
     BSD 3-Clause ``New'' or ``Revised'' License \\
     Copyright 2024 Minsu Kwon \\
     Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
@@ -79,9 +84,11 @@ operation from code or binary files on your own.
 
     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 \end{tcolorbox}
+\end{center}
+\vspace*{\fill}
 
 \newpage
-\section*{Preface}
+\section*{\centering Preface}
 
 \begin{flushleft}
 This document is detailed system manual of the homebrew computer powered by
@@ -296,7 +303,7 @@ The following tables of notational conventions affects all descriptions througho
     \rowcolor[HTML]{EFEFEF}
     % row 14
     \makecell*[{{p{\linewidth}}}]{
-        \texttt{\textit{Boldface Monospaced Text}}
+        \texttt{\textbf{Boldface Monospaced Text}}
     } & \makecell*[{{p{\linewidth}}}]{
         Similar as above, but the role of boldface text is added.
     } \\
@@ -333,6 +340,54 @@ The following tables of notational conventions affects all descriptions througho
 
 \newpage
 \chapter{Overview}
+
+\begin{tikzpicture}[
+    component_large/.style={rectangle, align=center, draw=black, thin, minimum width=3cm, minimum height=3cm},
+    component/.style={rectangle, align=center, draw=black, thin, minimum width=3cm, minimum height=1.4cm},
+    component_small/.style={rectangle, align=center, draw=black, thin, minimum width=1.4cm, minimum height=1.4cm},
+    slot/.style={rectangle, align=center, draw=black, thin, minimum width=3cm, minimum height=6mm},
+    conn/.style={rectangle, align=center, draw=black, thin, minimum width=3cm, minimum height=6mm},
+    bus_unidir/.style={single arrow, draw=black, minimum width=0.5cm, single arrow head extend=2mm, minimum height=10mm},
+    bus_bidir/.style={double arrow, draw=black, minimum width=0.5cm, double arrow head extend=2mm, minimum height=10mm},
+    text/.style={},
+]
+    \node(cpu)[component_large] at (0, 0) {MC68030\\ Microprocessor};
+    \node(fpu)[component_large] at (0, -34mm) {MC68882\\ Floating-Point\\ Coprocessor};
+    \node(processor_group)[draw=black, fit={
+        (cpu) (fpu)
+    }]{};
+
+    \node(bios)[component_large] at (34mm, 0) {Flash BIOS};
+    \node(dmac)[component_large] at (66mm, 0) {DMA Controller};
+    \node(dramc)[component_large] at (98mm, 0) {DRAM\\ Controller};
+    \node(simm0)[slot] at (130mm, 12mm) {SIMM Slot 0};
+    \node(simm1)[slot] at (130mm, 4mm) {SIMM Slot 1};
+    \node(simm2)[slot] at (130mm, -4mm) {SIMM Slot 2};
+    \node(simm3)[slot] at (130mm, -12mm) {SIMM Slot 3};
+    \node(memory_group)[draw=black, fit={
+        (bios) (dramc) (dmac) (simm0) (simm1) (simm2) (simm3)
+    }]{};
+
+    \node(irqc)[component] at (34mm, -26mm) {TIM/IRQC\\ MC68901 \#0};
+    \node(irqc)[component] at (34mm, -42mm) {TIM/IRQC\\ MC68901 \#1};
+    \node(fdc)[component_small] at (58mm, -26mm) {FDC};
+    \node(i8242)[component_small] at (74mm, -26mm) {i8242};
+    \node(rtc)[component_small] at (90mm, -26mm) {RTC};
+    \node(duart)[component_small] at (106mm, -26mm) {Serial};
+    \node(isa0)[slot] at (130mm, -22mm) {ISA Slot 0};
+    \node(isa1)[slot] at (130mm, -30mm) {ISA Slot 1};
+    \node(ata_conn)[conn] at (34mm, -54mm) {ATA Connector};
+    \node(fdc_conn)[conn] at (66mm, -54mm) {Floppy Conn.};
+    \node(peripheral_group)[draw=black, fit={
+        (irqc) (isa0) (isa1) (ata_conn) (fdc_conn)
+    }]{};
+
+    %\node(local_data_bus)[bus_bidir, above right=-1cm and 3mm of cpu]{};
+    %\node(local_address_bus)[bus_unidir, below right=-1cm and 3mm of cpu]{};
+    \node(system)[draw=black, fit={
+        (processor_group) (memory_group) (peripheral_group)
+    }]{};
+\end{tikzpicture}
 
 \begin{flushleft}
     Contents in this chapter roughly explains about the entire architecture of
